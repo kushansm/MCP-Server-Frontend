@@ -30,6 +30,11 @@ export default function Home() {
             </button>
           </div>
 
+          {/* Answer Display */}
+          <h2 className="text-xl font-semibold text-center">Answers</h2>
+          <div className="min-h-[128px] bg-gray-100 border rounded p-4 text-gray-800">
+          </div>
+
         </section>
 
       </div>
