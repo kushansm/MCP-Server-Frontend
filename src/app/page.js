@@ -7,12 +7,12 @@ export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [questionStatus, setQuestionStatus] = useState("");
+  const [emailStatus, setEmailStatus] = useState("");
   const [emailForm, setEmailForm] = useState({
     recipient: "",
     subject: "",
     body: "",
   });
-  const [emailStatus, setEmailStatus] = useState("");
 
   const handleUpload = async () => {
     if (!resumeFile) {
@@ -29,7 +29,14 @@ export default function Home() {
         body: formData,
       });
       const data = await res.json();
-      setUploadStatus(res.ok ? data.message || "Uploaded!" : data.error || "Failed.");
+      if (res.ok) {
+        setUploadStatus(data.message || "Uploaded!");
+        if (data.extractedEmail && data.extractedEmail !== "No email found in resume") {
+          setEmailForm((prev) => ({ ...prev, recipient: data.extractedEmail }));
+        }
+      } else {
+        setUploadStatus(data.error || "Upload failed.");
+      }
     } catch (err) {
       setUploadStatus("Server error during upload.");
     }
@@ -48,7 +55,7 @@ export default function Home() {
       const data = await res.json();
       if (res.ok) {
         setAnswer(data.answer || "No answer returned.");
-        setQuestionStatus("Answer retrieved");
+        setQuestionStatus("Answer retrieved.");
       } else {
         setAnswer("");
         setQuestionStatus(data.error || "Failed to get answer.");
@@ -60,8 +67,9 @@ export default function Home() {
   };
 
   const handleSendEmail = async () => {
-    if (!emailForm.subject || !emailForm.body) {
-      setEmailStatus("Subject and body are required.");
+    const { recipient, subject, body } = emailForm;
+    if (!recipient || !subject || !body) {
+      setEmailStatus("Please fill in all fields.");
       return;
     }
 
@@ -69,12 +77,11 @@ export default function Home() {
       const res = await fetch("http://localhost:3001/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(emailForm),
+        body: JSON.stringify({ recipient, subject, body }),
       });
-
       const data = await res.json();
-      setEmailStatus(res.ok ? data.message || "Email sent successfully." : data.error || "Failed to send email.");
-    } catch (err) {
+      setEmailStatus(res.ok ? data.message : data.error);
+    } catch {
       setEmailStatus("Server error while sending email.");
     }
   };
@@ -105,7 +112,7 @@ export default function Home() {
             )}
           </section>
 
-          {/* Ask Question */}
+          {/* Ask Resume Question */}
           <section className="space-y-4">
             <h2 className="text-xl font-semibold text-center text-purple-700">Ask a Resume Question</h2>
             <input
@@ -127,7 +134,6 @@ export default function Home() {
             {questionStatus && (
                 <p className="text-center text-sm text-blue-700">{questionStatus}</p>
             )}
-
             <h2 className="text-xl font-semibold text-center text-gray-700">Answer</h2>
             <div className="min-h-[128px] bg-gray-100 border border-gray-300 rounded p-4 text-gray-800 whitespace-pre-line">
               {answer}
@@ -137,15 +143,13 @@ export default function Home() {
           {/* Send Email */}
           <section className="space-y-4">
             <h2 className="text-xl font-semibold text-center text-green-700">Send Email</h2>
-
             <input
                 type="email"
-                placeholder="Recipient (optional)"
+                placeholder="Recipient"
                 value={emailForm.recipient}
                 onChange={(e) => setEmailForm({ ...emailForm, recipient: e.target.value })}
                 className="border border-gray-300 rounded px-4 py-2 w-full"
             />
-
             <input
                 type="text"
                 placeholder="Subject"
@@ -153,15 +157,13 @@ export default function Home() {
                 onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
                 className="border border-gray-300 rounded px-4 py-2 w-full"
             />
-
             <textarea
                 placeholder="Email body"
-                rows={4}
                 value={emailForm.body}
                 onChange={(e) => setEmailForm({ ...emailForm, body: e.target.value })}
                 className="border border-gray-300 rounded px-4 py-2 w-full"
+                rows={4}
             />
-
             <div className="flex justify-center">
               <button
                   onClick={handleSendEmail}
@@ -170,7 +172,6 @@ export default function Home() {
                 Send Email
               </button>
             </div>
-
             {emailStatus && (
                 <p className="text-center text-sm text-green-700">{emailStatus}</p>
             )}
