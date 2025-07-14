@@ -7,6 +7,12 @@ export default function Home() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [questionStatus, setQuestionStatus] = useState("");
+  const [emailForm, setEmailForm] = useState({
+    recipient: "",
+    subject: "",
+    body: "",
+  });
+  const [emailStatus, setEmailStatus] = useState("");
 
   const handleUpload = async () => {
     if (!resumeFile) {
@@ -18,7 +24,7 @@ export default function Home() {
     formData.append("resume", resumeFile);
 
     try {
-      const res = await fetch("http://localhost:3000/resume/upload", {
+      const res = await fetch("http://localhost:3001/resume/upload", {
         method: "POST",
         body: formData,
       });
@@ -36,11 +42,13 @@ export default function Home() {
     }
 
     try {
-      const res = await fetch(`http://localhost:3000/resume/chat?q=${encodeURIComponent(question)}`);
+      const res = await fetch(
+          `http://localhost:3001/resume/chat?q=${encodeURIComponent(question)}`
+      );
       const data = await res.json();
       if (res.ok) {
         setAnswer(data.answer || "No answer returned.");
-        setQuestionStatus("Answer retrieved ");
+        setQuestionStatus("Answer retrieved");
       } else {
         setAnswer("");
         setQuestionStatus(data.error || "Failed to get answer.");
@@ -48,6 +56,26 @@ export default function Home() {
     } catch {
       setAnswer("");
       setQuestionStatus("Server error while asking.");
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailForm.subject || !emailForm.body) {
+      setEmailStatus("Subject and body are required.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3001/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(emailForm),
+      });
+
+      const data = await res.json();
+      setEmailStatus(res.ok ? data.message || "Email sent successfully." : data.error || "Failed to send email.");
+    } catch (err) {
+      setEmailStatus("Server error while sending email.");
     }
   };
 
@@ -100,11 +128,52 @@ export default function Home() {
                 <p className="text-center text-sm text-blue-700">{questionStatus}</p>
             )}
 
-            {/* Answer Display */}
             <h2 className="text-xl font-semibold text-center text-gray-700">Answer</h2>
             <div className="min-h-[128px] bg-gray-100 border border-gray-300 rounded p-4 text-gray-800 whitespace-pre-line">
               {answer}
             </div>
+          </section>
+
+          {/* Send Email */}
+          <section className="space-y-4">
+            <h2 className="text-xl font-semibold text-center text-green-700">Send Email</h2>
+
+            <input
+                type="email"
+                placeholder="Recipient (optional)"
+                value={emailForm.recipient}
+                onChange={(e) => setEmailForm({ ...emailForm, recipient: e.target.value })}
+                className="border border-gray-300 rounded px-4 py-2 w-full"
+            />
+
+            <input
+                type="text"
+                placeholder="Subject"
+                value={emailForm.subject}
+                onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
+                className="border border-gray-300 rounded px-4 py-2 w-full"
+            />
+
+            <textarea
+                placeholder="Email body"
+                rows={4}
+                value={emailForm.body}
+                onChange={(e) => setEmailForm({ ...emailForm, body: e.target.value })}
+                className="border border-gray-300 rounded px-4 py-2 w-full"
+            />
+
+            <div className="flex justify-center">
+              <button
+                  onClick={handleSendEmail}
+                  className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded shadow"
+              >
+                Send Email
+              </button>
+            </div>
+
+            {emailStatus && (
+                <p className="text-center text-sm text-green-700">{emailStatus}</p>
+            )}
           </section>
         </div>
       </div>
