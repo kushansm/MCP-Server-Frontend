@@ -24,7 +24,7 @@ export default function Home() {
     formData.append("resume", resumeFile);
 
     try {
-      const res = await fetch("http://localhost:3001/resume/upload", {
+      const res = await fetch("https://mcp-server-backend-production.up.railway.app/resume/upload", {
         method: "POST",
         body: formData,
       });
@@ -50,7 +50,7 @@ export default function Home() {
 
     try {
       const res = await fetch(
-          `http://localhost:3001/resume/chat?q=${encodeURIComponent(question)}`
+          `https://mcp-server-backend-production.up.railway.app/resume/chat?q=${encodeURIComponent(question)}`
       );
       const data = await res.json();
       if (res.ok) {
@@ -74,7 +74,7 @@ export default function Home() {
     }
 
     try {
-      const res = await fetch("http://localhost:3001/email", {
+      const res = await fetch("https://mcp-server-backend-production.up.railway.app/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ recipient, subject, body }),
